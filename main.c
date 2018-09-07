@@ -46,11 +46,15 @@ int matches_leading(char *partial_line, char *pattern) {
                 }
             }
             else if(*partial_line == *p){
+                if(*(p+2) == *partial_line)
+                    partial_line--;
                 p++;p++;
             }
             else{
                 p++;p++;
-                partial_line--;
+                if(*p != *partial_line);
+                else
+                    partial_line--;
             }
         }
         else if(*p == '+')
@@ -84,6 +88,7 @@ int matches_leading(char *partial_line, char *pattern) {
         }
         else{
             p = pattern;
+            partial_line--;
         }
         if(*p == '\0')
             return 1;
