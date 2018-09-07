@@ -88,7 +88,8 @@ int matches_leading(char *partial_line, char *pattern) {
         }
         else{
             p = pattern;
-            partial_line--;
+            if(*partial_line == *pattern)
+                partial_line--;
         }
         if(*p == '\0')
             return 1;
