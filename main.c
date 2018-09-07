@@ -17,7 +17,6 @@ char parse_char(char *partial_pattern, char *target) {
         default:
             return *partial_pattern;
     }
-    return '\0';
 }
 /**
  * Returns true if partial_line matches pattern, starting from
@@ -56,7 +55,7 @@ int matches_leading(char *partial_line, char *pattern) {
         }
         else if(*p == '+')
         {
-            temp = *(p-1);
+            temp = parse_char((p-1), (partial_line-1));
             p++;
             while(*p == *partial_line){
                 p++;
