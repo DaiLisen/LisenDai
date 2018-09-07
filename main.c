@@ -31,6 +31,8 @@ int matches_leading(char *partial_line, char *pattern) {
             }
             else{
                 p = pattern;
+                if(*partial_line == parse_char(pattern, partial_line))
+                    partial_line--;
             }
         }
         else if(*(p+1) == '?'){
@@ -88,7 +90,7 @@ int matches_leading(char *partial_line, char *pattern) {
         }
         else{
             p = pattern;
-            if(*partial_line == *pattern)
+            if(*partial_line == parse_char(pattern, partial_line))
                 partial_line--;
         }
         if(*p == '\0')
