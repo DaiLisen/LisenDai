@@ -24,6 +24,7 @@ char parse_char(char *partial_pattern, char *target) {
  */
 int matches_leading(char *partial_line, char *pattern) {
     char *p = pattern, *q = partial_line, temp;
+    int count1, count2;
     while(*partial_line != '\0'){
         if(*p == '\\'){
             if(*partial_line == *++p){
@@ -48,7 +49,16 @@ int matches_leading(char *partial_line, char *pattern) {
                 }
             }
             else if(*partial_line == *p){
-                if(*(p+2) == *partial_line)
+                count1 = 0;
+                count2 = 0;
+                temp = *p;
+                while(p[count1+2] == temp){
+                    count1++;
+                }
+                while(partial_line[count2] == temp){
+                    count2++;
+                }
+                if(count1 == count2)
                     partial_line--;
                 p++;p++;
             }
