@@ -30,79 +30,90 @@ int squared_euclidean(int width, int height, unsigned char *a, unsigned char *b)
     return d;
 }
 
+int low_bondary(int x, int maximum_displacement){
+    int x_min;
+    if(x < maximum_displacement)
+        x_min = 0;
+    else
+        x_min = x - maximum_displacement;
+    return x_min;
+}
+
+int high_bondary(int x, int maximum_displacement, int image_width){
+    int x_max;
+    if (x + maximum_displacement > image_width - 1) {
+        x_max = image_width - 1;
+    }
+    else{
+        x_max = x + maximum_displacement;
+    }
+    return x_max;
+}
+
+
+
+void depth_finder(int x, int y, int x_min, int x_max, int y_min, int y_max, unsigned char *depth_map, unsigned char *left, unsigned char *right, int image_width, int image_height, int feature_width, int feature_height,int maximum_displacement){
+    int x0 = -1;
+    int y0 = -1;
+    int sum = 0;
+    int h = - feature_height;
+    int w = - feature_width;
+    unsigned int euclidean = -1;
+    while(y_min++ <= y_max){
+        while(x_min++ <= x_max){
+            if (x_min < feature_width || y_min - feature_height < 0 || x_min + feature_width > image_width - 1 || y_min + feature_height > image_height - 1) {
+                continue;
+            }
+            while(h++ <= feature_height) {
+                while(w++ <= feature_width) {
+                    sum += (left[(y + h) * image_width + (x + w)] - right[(y_min + w) * image_width + (x_min + w)]) * (left[(y + h) * image_width + (x + w)] - right[(y_min + w) * image_width + (x_min + w)]);
+                }
+            }
+            if (sum < euclidean) {
+                euclidean = sum;
+                x0 = x_min - 1;
+                y0 = y_min - 1;
+            }
+            else if (sum == euclidean) {
+                if (normalized_displacement(x - x_min, y - y_min, maximum_displacement) < normalized_displacement(x - y0, y - y0, maximum_displacement)) {
+                    y0 = y_min;
+                    x0 = x_min;
+                }
+            }
+        }
+    }
+    *depth_map = normalized_displacement(x - x0, y - y0, maximum_displacement);
+}
+
+
+
 
 void calc_depth(unsigned char *depth_map, unsigned char *left,
                 unsigned char *right, int image_width, int image_height,
                 int feature_width, int feature_height, int maximum_displacement) {
     int x = 0;
     int y = 0;
-    int lx = 0;  //low x
-    int hx = 0;  //high x
-    int ly = 0;
-    int hy = 0;
-    for (int i = 0; i < image_width * image_height; i++) {  //i是左边image的第i个值，对应坐标就是小绿                                       点的坐标green
-        y = i / image_width;   //行
-        x = i % image_width;   //列  （y，x）绿点坐标
-        
-        if (maximum_displacement == 0) {
-            depth_map[i] = 0;
+    int x_max = 0;
+    int x_min = 0;
+    int y_max = 0;
+    int y_min = 0;
+    int i;
+    int image_size = image_width * image_width;
+    for(i = 0; i < image_size; i++){
+        y = i / image_width;
+        x = i % image_width; // (y, x)
+        if (maximum_displacement == 0)
+            *depth_map = 0;
+        else if (x < feature_width || y < feature_height || x + feature_width >= image_width || y + feature_height >= image_width)
+            *depth_map = 0;
+        else{
+            x_min = low_bondary(x, maximum_displacement);
+            y_min = low_bondary(y, maximum_displacement);
+            x_max = high_bondary(x, maximum_displacement, image_width);
+            y_max = high_bondary(y, maximum_displacement, image_width);
         }
-        else if (x - feature_width < 0 || x + feature_width > image_width - 1 || y - feature_height < 0 || y + feature_height > image_height - 1) { //on the edge of the image
-            depth_map[i] = 0;
-        }
-        else {
-            if (x - maximum_displacement < 0) {   //when ==0, it is on the edge.the x=0.so it should be <0.
-                lx = 0;
-            }
-            else {
-                lx = x - maximum_displacement;//low xy和high xy确定了粉色框的边界 通过max displacement
-            }
-            if ( x + maximum_displacement > image_width - 1) {
-                hx = image_width - 1;
-            }
-            else {
-                hx = x + maximum_displacement;
-            }
-            if (y - maximum_displacement < 0) {
-                ly = 0;
-            }
-            else {
-                ly = y - maximum_displacement;
-            }
-            if (y + maximum_displacement > image_height - 1) {
-                hy = image_height - 1;
-            }
-            else {
-                hy = y + maximum_displacement;
-            }
-            int st_x = -1;
-            int st_y = -1;
-            unsigned int euclidean = -1;
-            for (int j = ly; j <= hy; j++) {  //j k是求和的界限
-                for (int k = lx; k <= hx; k++) {
-                    int sum = 0;  //减去feature——width之后就是针对小红点的红色方框的边界值
-                    if (k - feature_width < 0 || k + feature_width > image_width - 1 || j - feature_height < 0 || j + feature_height > image_height - 1) {
-                        continue;  //跳出循环进入下一个，k++ when feature is out of the iamge
-                    }
-                    for (int f = -feature_height; f <= feature_height; f++) {
-                        for (int m = -feature_width; m <= feature_width; m++) {
-                            sum += (left[(y + f) * image_width + (x + m)] - right[(j + f) * image_width + (k + m)])^2;  //(left[]-right[])^2求和 找在1d memory中这个点对应的值
-                        }
-                    }
-                    if (sum < euclidean) {  //寻找最小值，及其对应的坐标
-                        euclidean = sum;
-                        st_x = k;
-                        st_y = j;//the smallest ywe want to get
-                    }
-                    else if (sum == euclidean) {  //两个点对应结果相同时，看哪个归一化最小
-                        if (normalized_displacement(x - k, y - j, maximum_displacement) < normalized_displacement(x - st_x, y - st_y, maximum_displacement)) {
-                            st_y = j;
-                            st_x = k;
-                        }
-                    }
-                } //for(k)
-            }  //for(j)
-            depth_map[i] = normalized_displacement(x - st_x, y - st_y, maximum_displacement);
-        }
-    }  //for
+        depth_finder(x, y, x_min, x_max, y_min, y_max, depth_map, left, right, image_width, image_height,  feature_width, feature_height, maximum_displacement);
+        depth_map++;
+    }
+    /* YOUR CODE HERE */
 }
