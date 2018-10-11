@@ -41,7 +41,7 @@ def index(file_name, output="spark-wc-out-index"):
     indices = file.flatMap(flatMapFunc) \
                   .map(mapFunc) \
                   .reduceByKey(reduceFunc) \
-                  .sortBySort()
+                  .sortByKey()
 
     indices.coalesce(1).saveAsTextFile(output)
 
