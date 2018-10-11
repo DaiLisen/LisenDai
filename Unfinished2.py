@@ -12,15 +12,16 @@ def flatMapFunc(document):
     Is there a way to combine these three things and make a key, value pair?
     """
     """ Your code here. """
-    flatmap = []
+    flat_map = []
     words_set = set(re.findall(r"\w+", document[1]))
     words = re.findall(r"\w+", document[1])
     for word1 in words_set:
-        i = 0
-        for word2 in words
+        i = -1
+        for word2 in words:
+            i = i + 1
             if word1 == word2:
-                flatmap.append((word1 + '  ' + document[0], str(i++)))
-    return flatmap
+                flat_map.append((word1 + '  ' + document[0], str(i)))
+    return flat_map
     # return re.findall(r"\w+", document[1])
 
 def mapFunc(arg):
@@ -39,7 +40,8 @@ def index(file_name, output="spark-wc-out-index"):
 
     indices = file.flatMap(flatMapFunc) \
                   .map(mapFunc) \
-                  .reduceByKey(reduceFunc)
+                  .reduceByKey(reduceFunc) \
+                  .sortBySort()
 
     indices.coalesce(1).saveAsTextFile(output)
 
